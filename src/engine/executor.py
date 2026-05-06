@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from src.parser.ast import InsertStatement
 from src.storage.table import Table
@@ -9,7 +9,7 @@ class PyDBEngine:
         # The database holds a collection of tables in memory
         self.tables: Dict[str, Table] = {}
 
-    def execute_ddl(self, table_name: str, columns: List[str]):
+    def execute_ddl(self, table_name: str, columns: list[str]):
         """Data Definition Language (CREATE TABLE)"""
         self.tables[table_name] = Table(table_name, columns)
 
