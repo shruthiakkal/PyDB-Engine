@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 
 from src.enums.table_enums import QueryEnum
 from src.parser.ast import DeleteStatement, InsertStatement, SelectStatement
@@ -13,10 +13,61 @@ class SqlParser:
         data = data.replace(",", " ")
         data = data.replace(";", " ")
         data = data.replace("=", " ")
+
+        # add space near operators - useful after WHERE in SELECT
+        multi_operators = [">=", "<=", "!=", "<>"]
+        single_operators = ["=", ">", "<"]
+
+        for op in multi_operators:
+            data = data.replace(op, f" {op} ")
+
+        for op in single_operators:
+            data = data.replace(op, f" {op} ")
+        
         return data.split()
 
     def clean_token(self, token: str) -> str:
         return token.strip().strip("'").strip('"').lower()
+    
+    def find_column_values_after_where_command(self,tokens: list[str],where_index: int) -> Dict[str, Any] | None:
+        
+        record: Dict[str, Any] = {}
+
+        allowed_operators = {"=", ">", "<", ">=", "<=", "!=", "<>"}
+
+        i = where_index + 1
+
+        while i < len(tokens):
+            column = self.clean_token(tokens[i])
+
+            if i + 1 >= len(tokens):
+                return None
+
+            operator = tokens[i + 1]
+
+            if operator not in allowed_operators:
+                return None
+
+            if i + 2 >= len(tokens):
+                return None
+
+            value = self.clean_token(tokens[i + 2])
+
+            record[column] = {
+                "operator": operator,
+                "value": value
+            }
+
+            i += 3
+
+            if i < len(tokens):
+                #  TODO currently supports only AND
+                if tokens[i].upper() != "AND":
+                    return None
+                i += 1
+
+        return record
+
 
     def parse(self, data: str | None) -> InsertStatement | SelectStatement | None:
         if not data:
@@ -90,7 +141,18 @@ class SqlParser:
 
         table = self.clean_token(tokens[from_index + 1])
 
-        return SelectStatement(table, columns)
+        next_index = from_index + 2
+
+        if next_index < len(tokens):
+            if tokens[next_index].upper() != QueryEnum.WHERE:
+                return None
+
+            where_conditions = self.find_column_values_after_where_command(tokens, next_index)
+
+            if where_conditions is None:
+                return None
+        
+        return SelectStatement(table, columns, where_conditions)
 
     def parse_delete(self, tokens: list[str]) ->DeleteStatement | None:
         # DELETE FROM drivers WHERE id abc123
@@ -109,5 +171,5 @@ class SqlParser:
         column = self.clean_token(tokens[4])
         value = self.clean_token(tokens[5])
 
-        return DeleteStatement(type, column, value)
+        return DeleteStatement(table, column, value)
         
