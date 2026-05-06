@@ -157,6 +157,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# Readme
+personalReadme.md
+
 # Spyder project settings
 .spyderproject
 .spyproject
