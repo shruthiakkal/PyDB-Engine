@@ -17,7 +17,7 @@ class Table:
         self.rows:List[Dict[str, Any]] = []
 
         # CONCURRENCY
-        # we won't `asyncio`, we are going to use threads, we MUST lock the table before writing to prevent memory corruption if two multiple requests try to insert at the exact same millisecond
+        # won't `asyncio`, going to use threads, you MUST lock the table before writing to prevent memory corruption if two multiple requests try to insert at the exact same millisecond
         self.lock = threading.Lock() # creates a Mutex
 
     def insert(self, columns: List[str], values: List[Any])-> Dict[str, Any]:
