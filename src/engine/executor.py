@@ -2,27 +2,29 @@ from typing import Any, Dict
 
 from src.parser.ast import InsertStatement
 from src.storage.table import Table
+from src.storage.hash_index import HashIndexTable
 
 
 class PyDBEngine:
     def __init__(self):
         # The database holds a collection of tables in memory
         self.tables: Dict[str, Table] = {}
+        self.hashTables: Dict[str, HashIndexTable] = {}
 
     def execute_ddl(self, table_name: str, columns: list[str]):
         """Data Definition Language (CREATE TABLE)"""
         self.tables[table_name] = Table(table_name, columns)
 
     def execute(self, statement: Any):
-        """INSERT, SELECT """
-        
+        """INSERT, SELECT"""
+
         if isinstance(statement, InsertStatement):
             table = self.tables.get(statement.table_name)
             if not table:
                 raise ValueError(f"Table '{statement.table_name}' does not exist.")
-            
+
             # write to the specific Table object
             return table.insert(statement.columns, statement.values)
-        
+
         else:
             raise NotImplementedError("Only INSERT is supported now.")
