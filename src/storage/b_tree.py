@@ -1,5 +1,5 @@
 import threading
-from typing import Any, Literal, TypedDict, Iterator, TypeAlias
+from typing import Any, TypeAlias
 
 Value: TypeAlias = Any
 Row: TypeAlias = dict[str, Value]
@@ -107,8 +107,6 @@ class BTree:
             # Recursively insert into the guaranteed non-full child
             self._insert_non_full(node.children[i], key, row_id)
 
-    # ... inside the BTree class
-
     def _split_child(self, parent: BTreeNode, i: int) -> None:
         """Splits the i-th child of the parent node."""
         t = self.t
@@ -157,10 +155,10 @@ class BTreeTable:
 
         # indexes: mapping index name to BTree iinstance
         # A BTree will internally store { column_value: [row_id_1, row_id_2] }
-        self.indexes: dict[str, BTreeNode] = {}
+        self.indexes: dict[str, BTree] = {}
 
         if primary_key:
-            self.indexes[primary_key] = BTreeNode()
+            self.indexes[primary_key] = BTree()
 
     def insert(self, columns: list[str], values: list[Any]) -> Row:
         if len(columns) != len(values):
@@ -175,7 +173,7 @@ class BTreeTable:
             # --- PHASE 2: Validation ---
             if self.primary_key and self.primary_key in row:
                 pk_value = row[self.primary_key]
-                pk_btree = self.indexes[self.primary_key]
+                pk_btree: BTree = self.indexes[self.primary_key]
 
                 # BTree search: O(log N)
                 if pk_btree.exists(pk_value):
